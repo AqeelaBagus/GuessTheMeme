@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Pose Challenge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0d0d0b;
+            --surface:  #161614;
+            --panel:    #111110;
+            --border:   #2c2c28;
+            --border-hi:#3e3e38;
+            --text:     #e4dfd4;
+            --muted:    #686460;
+            --dim:      #2e2e2a;
+            --accent:   #c0452a;
+            --accent-lo:#1e0e09;
+            --good:     #4a9e6b;
+            --mid:      #c49a2a;
+            --bad:      #c0452a;
+        }
+
+        html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'Barlow', sans-serif; }
+        body { display:grid; grid-template-rows:54px 1fr 96px; }
+
+        body::before {
+            content:''; position:fixed; inset:0;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.012) 3px, rgba(255,255,255,0.012) 4px);
+            pointer-events:none; z-index:0;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:0 28px;
+            border-bottom:1px solid var(--border);
+            background:var(--surface);
+            position:relative; z-index:10;
+        }
+
+        .logo { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text); }
+        .logo em { color:var(--accent); font-style:normal; }
+
+        .header-center { position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; }
+
+        .rec-dot {
+            width:7px; height:7px; border-radius:50%;
+            background:var(--accent);
+            box-shadow:0 0 0 2px var(--accent-lo);
+            animation:recBlink 1.4s ease-in-out infinite;
+        }
+
+        @keyframes recBlink {
+            0%,100% { opacity:1; }
+            50%      { opacity:0.25; }
+        }
+
+        .rec-label { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; }
+
+        .header-right { display:flex; align-items:center; gap:24px; }
+        .level-indicator { display:flex; align-items:baseline; gap:5px; }
+        .level-word { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
+
+        .level-num {
+            font-family:'Barlow Condensed',sans-serif; font-size:1.4rem; font-weight:800; color:var(--text); line-height:1;
+            display:inline-block;
+        }
+
+        .level-num.bump {
+            animation: levelBump 0.35s cubic-bezier(.36,.07,.19,.97);
+        }
+
+        @keyframes levelBump {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.45); color: var(--accent); }
+            100% { transform: scale(1); }
+        }
+
+        /* ── MAIN ── */
+        .main { display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden; position:relative; z-index:1; }
+
+        .panel { position:relative; overflow:hidden; background:var(--panel); }
+        .panel::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--border-hi); z-index:2; }
+        .panel-left { border-right:1px solid var(--border); }
+
+        .panel-label { position:absolute; top:14px; left:14px; background:rgba(13,13,11,0.85); border:1px solid var(--border-hi); padding:4px 12px; font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.14em; color:var(--muted); text-transform:uppercase; z-index:10; }
+
+        img.video-feed  { width:100%; height:100%; object-fit:cover;   display:block; }
+        img.meme-display{ width:100%; height:100%; object-fit:contain; display:block; background:#080807; }
+
+        /* ── COUNTDOWN ── */
+        #countdown-text {
+            position:absolute; inset:0; display:none;
+            justify-content:center; align-items:center;
+            font-family:'Barlow Condensed',sans-serif; font-size:9rem; font-weight:800;
+            color:white; z-index:30; pointer-events:none;
+            text-shadow:0 2px 40px rgba(0,0,0,0.8);
+        }
+
+        .countdown-num {
+            display:inline-block;
+            animation: cdPop 0.25s cubic-bezier(.18,.89,.32,1.28);
+        }
+
+        @keyframes cdPop {
+            from { transform: scale(0.4); opacity:0; }
+            to   { transform: scale(1);   opacity:1; }
+        }
+
+        /* ── MYSTERY OVERLAY ── */
+        .mystery-overlay {
+            position:absolute; inset:0; display:flex;
+            flex-direction:column; justify-content:center; align-items:center;
+            background:var(--panel); z-index:5; gap:10px;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .mystery-overlay.hiding {
+            opacity:0; transform:scale(1.04);
+            pointer-events:none;
+        }
+
+        .mystery-q { font-family:'Barlow Condensed',sans-serif; font-size:5rem; font-weight:800; color:var(--dim); line-height:1; }
+        .mystery-hint { font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.16em; color:var(--muted); text-transform:uppercase; }
+
+        /* pulse around ? while waiting */
+        .mystery-q { animation: mystPulse 2.5s ease-in-out infinite; }
+        @keyframes mystPulse {
+            0%,100% { color: var(--dim); }
+            50%     { color: #555550; }
+        }
+
+        /* ── SCORE CHIP ── */
+        #score-display {
+            position:absolute; bottom:16px; right:16px; display:none;
+            background:var(--bg); border:1px solid var(--border-hi);
+            padding:12px 18px 10px; z-index:20;
+            animation: scoreIn 0.45s cubic-bezier(.18,.89,.32,1.28);
+        }
+
+        @keyframes scoreIn {
+            from { transform: scale(0.6) translateY(12px); opacity:0; }
+            to   { transform: scale(1)   translateY(0);    opacity:1; }
+        }
+
+        #score-val { font-family:'Barlow Condensed',sans-serif; font-size:3rem; font-weight:800; color:var(--text); line-height:1; }
+        #score-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; color:var(--muted); margin-top:4px; text-transform:uppercase; }
+
+        /* ── FOOTER ── */
+        .footer {
+            display:flex; align-items:center; padding:0 28px; gap:24px;
+            border-top:1px solid var(--border);
+            background:var(--surface);
+            position:relative; z-index:10;
+        }
+
+        .clue-block { flex:1; min-width:0; display:flex; align-items:center; gap:20px; }
+        .clue-col-meta { flex-shrink:0; }
+        .clue-lv-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:2px; }
+        .clue-lv-val { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:800; color:var(--text); line-height:1; }
+        .clue-sep { width:1px; height:36px; background:var(--border-hi); flex-shrink:0; }
+        .clue-col-text { min-width:0; }
+        .clue-text-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:3px; }
+
+        #clue-text {
+            font-family:'Barlow Condensed',sans-serif; font-size:1.25rem; font-weight:700;
+            color:var(--text); letter-spacing:0.02em;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            transition: opacity 0.25s ease;
+        }
+
+        #clue-text.fade { opacity:0; }
+
+        /* ── BUTTONS ── */
+        .btn-group { display:flex; gap:8px; flex-shrink:0; }
+
+        .btn {
+            padding:0 22px; height:40px;
+            font-family:'Barlow Condensed',sans-serif; font-size:0.88rem; font-weight:700;
+            letter-spacing:0.1em; text-transform:uppercase;
+            border:1px solid transparent; cursor:pointer;
+            transition: transform 0.12s, background 0.12s, border-color 0.12s, opacity 0.12s;
+        }
+
+        .btn:hover  { transform: translateY(-2px); }
+        .btn:active { transform: scale(0.94); }
+
+        .btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+        .btn-primary:hover { background:#a8371f; border-color:#a8371f; }
+        .btn-primary:disabled { opacity:0.3; cursor:not-allowed; transform:none; }
+
+        .btn-outline { background:transparent; color:var(--text); border-color:var(--border-hi); }
+        .btn-outline:hover { border-color:var(--text); }
+
+        /* entrance for next button */
+        #btn-next { animation: none; }
+        #btn-next.appear { animation: btnAppear 0.3s cubic-bezier(.18,.89,.32,1.28); }
+        @keyframes btnAppear {
+            from { transform: scale(0.7) translateX(8px); opacity:0; }
+            to   { transform: scale(1)   translateX(0);   opacity:1; }
+        }
+
+        /* ── FLASH ── */
+        #flash-overlay { position:fixed; inset:0; background:white; opacity:0; pointer-events:none; z-index:500; }
+
+        /* ── RESULTS ── */
+        #results-screen {
+            position:fixed; inset:0;
+            background:rgba(5,5,4,0.82);
+            z-index:200; display:none;
+            align-items:center; justify-content:center;
+        }
+
+        #results-screen.show { display:flex; }
+
+        .results-card {
+            width:min(600px, 90vw);
+            background:var(--surface);
+            border:1px solid var(--border-hi);
+            animation: cardSlideUp 0.4s cubic-bezier(.18,.89,.32,1.28);
+        }
+
+        @keyframes cardSlideUp {
+            from { transform: translateY(32px); opacity:0; }
+            to   { transform: translateY(0);    opacity:1; }
+        }
+
+        .results-topbar { height:3px; background:var(--accent); }
+
+        .results-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:28px 32px 24px; border-bottom:1px solid var(--border); }
+        .rh-eyebrow { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.14em; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
+        .rh-score { font-family:'Barlow Condensed',sans-serif; font-size:5rem; font-weight:800; line-height:1; color:var(--text); }
+        .rh-verdict { font-size:0.82rem; color:var(--muted); margin-top:8px; font-style:italic; }
+
+        .rh-right { display:flex; flex-direction:column; gap:16px; align-items:flex-end; padding-top:6px; }
+        .stat { text-align:right; }
+        .stat-n { font-family:'Barlow Condensed',sans-serif; font-size:1.8rem; font-weight:800; line-height:1; color:var(--text); }
+        .stat-l { font-family:'JetBrains Mono',monospace; font-size:0.58rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
+
+        /* breakdown rows with stagger */
+        .breakdown { max-height:200px; overflow-y:auto; }
+        .breakdown::-webkit-scrollbar { width:3px; }
+        .breakdown::-webkit-scrollbar-thumb { background:var(--border-hi); }
+
+        .br-row {
+            display:grid; grid-template-columns:48px 1fr 80px 52px;
+            align-items:center; gap:14px;
+            padding:10px 32px; border-bottom:1px solid var(--border);
+            opacity:0; transform:translateX(-10px);
+            animation: rowIn 0.3s ease forwards;
+        }
+
+        .br-row:last-child { border-bottom:none; }
+
+        @keyframes rowIn {
+            to { opacity:1; transform:translateX(0); }
+        }
+
+        .br-lv { font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--muted); text-transform:uppercase; }
+        .br-name { font-size:0.82rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .br-bar-bg { height:3px; background:var(--dim); }
+        .br-bar { height:100%; transition: width 0.9s cubic-bezier(.22,1,.36,1); }
+        .br-pct { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; text-align:right; }
+
+        .results-footer { display:flex; gap:8px; justify-content:flex-end; padding:16px 32px; border-top:1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+<div id="flash-overlay"></div>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="logo">Meme<em>Pose</em></div>
+    <div class="header-center">
+        <div class="rec-dot"></div>
+        <div class="rec-label">REC</div>
+    </div>
+    <div class="header-right">
+        <div class="level-indicator">
+            <span class="level-word">Level</span>
+            <span class="level-num" id="level-num">1</span>
+        </div>
+    </div>
+</header>
+
+<!-- PANELS -->
+<div class="main">
+    <div class="panel panel-left">
+        <div class="panel-label">Kamera</div>
+        <img src="{{ url_for('video_feed') }}" class="video-feed" alt="Feed Kamera">
+        <div id="countdown-text" style="display:none;">
+            <span class="countdown-num">3</span>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-label">Target</div>
+        <img id="meme-image" class="meme-display" src="" alt="Meme Target">
+        <div id="mystery-cover" class="mystery-overlay">
+            <div class="mystery-q">?</div>
+            <div class="mystery-hint">Baca clue · tekan mulai</div>
+        </div>
+        <div id="score-display" style="display:none;">
+            <div id="score-val">—</div>
+            <div id="score-label">Akurasi pose</div>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="clue-block">
+        <div class="clue-col-meta">
+            <div class="clue-lv-label">Lvl</div>
+            <div class="clue-lv-val" id="level-num-2">1</div>
+        </div>
+        <div class="clue-sep"></div>
+        <div class="clue-col-text">
+            <div class="clue-text-label">Target pose</div>
+            <div id="clue-text">Memuat...</div>
+        </div>
+    </div>
+    <div class="btn-group">
+        <button onclick="showResults()" class="btn btn-outline" id="btn-results" style="display:none;">Hasil</button>
+        <button onclick="startGame()" id="btn-start" class="btn btn-primary">Mulai</button>
+        <button onclick="nextLevel()" id="btn-next" class="btn btn-outline" style="display:none;">Lanjut →</button>
+    </div>
+</footer>
+
+<!-- RESULTS -->
+<div id="results-screen">
+    <div class="results-card">
+        <div class="results-topbar"></div>
+        <div class="results-head">
+            <div>
+                <div class="rh-eyebrow">Hasil Akhir · Meme Pose Challenge</div>
+                <div class="rh-score" id="res-avg">—</div>
+                <div class="rh-verdict" id="res-verdict"></div>
+            </div>
+            <div class="rh-right">
+                <div class="stat">
+                    <div class="stat-n" id="res-total">0</div>
+                    <div class="stat-l">Level selesai</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-n" id="res-best">—</div>
+                    <div class="stat-l">Skor terbaik</div>
+                </div>
+            </div>
+        </div>
+        <div class="breakdown" id="breakdown-list"></div>
+        <div class="results-footer">
+            <button onclick="restartGame()" class="btn btn-outline">Main lagi</button>
+            <button onclick="closeResults()" class="btn btn-primary">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let history = [];
+    let currentClue = '';
+
+    function setClue(text) {
+        const el = document.getElementById('clue-text');
+        el.classList.add('fade');
+        setTimeout(() => {
+            el.textContent = text;
+            el.classList.remove('fade');
+        }, 220);
+    }
+
+    function bumpLevel(val) {
+        const el = document.getElementById('level-num');
+        el.textContent = val;
+        el.classList.remove('bump');
+        void el.offsetWidth; // reflow
+        el.classList.add('bump');
+    }
+
+    function loadLevel() {
+        fetch('/get_state').then(r => r.json()).then(data => {
+            bumpLevel(data.level);
+            document.getElementById('level-num-2').textContent = data.level;
+            setClue(data.clue);
+            document.getElementById('meme-image').src = data.image_url;
+            currentClue = data.clue;
+
+            const cover = document.getElementById('mystery-cover');
+            cover.classList.remove('hiding');
+            cover.style.display = 'flex';
+
+            document.getElementById('score-display').style.display = 'none';
+            document.getElementById('btn-start').style.display  = 'inline-block';
+            document.getElementById('btn-next').style.display   = 'none';
+            document.getElementById('btn-start').disabled       = false;
+            document.getElementById('btn-start').textContent    = 'Mulai';
+            if (history.length > 0) document.getElementById('btn-results').style.display = 'inline-block';
+        });
+    }
+
+    loadLevel();
+
+    function triggerFlash() {
+        const f = document.getElementById('flash-overlay');
+        f.style.transition = 'none'; f.style.opacity = '1';
+        setTimeout(() => { f.style.transition = 'opacity 0.5s ease'; f.style.opacity = '0'; }, 50);
+    }
+
+    function setCountdown(n) {
+        const wrap = document.getElementById('countdown-text');
+        wrap.innerHTML = `<span class="countdown-num">${n}</span>`;
+    }
+
+    function startGame() {
+        const btn = document.getElementById('btn-start');
+        const cd  = document.getElementById('countdown-text');
+        btn.disabled = true; btn.textContent = 'Siap...';
+        let count = 3;
+        cd.style.display = 'flex';
+        setCountdown(count);
+
+        const t = setInterval(() => {
+            count--;
+            if (count > 0) {
+                setCountdown(count);
+            } else {
+                clearInterval(t);
+                cd.innerHTML = '';
+                triggerFlash();
+                setTimeout(() => { cd.style.display = 'none'; finishGame(); }, 420);
+            }
+        }, 1000);
+    }
+
+    function finishGame() {
+        fetch('/check_score', { method:'POST' }).then(r => r.json()).then(data => {
+            // hide mystery with transition
+            const cover = document.getElementById('mystery-cover');
+            cover.classList.add('hiding');
+            setTimeout(() => { cover.style.display = 'none'; }, 400);
+
+            const box = document.getElementById('score-display');
+            const val = document.getElementById('score-val');
+            box.style.display = 'flex';
+            // remove and re-add to re-trigger animation
+            box.style.animation = 'none';
+            void box.offsetWidth;
+            box.style.animation = '';
+
+            const lv = parseInt(document.getElementById('level-num').textContent);
+            history.push({ level: lv, clue: currentClue, score: data.score });
+
+            const col = data.score >= 80 ? 'var(--good)' : data.score >= 50 ? 'var(--mid)' : 'var(--bad)';
+            val.style.color = col;
+
+            let t0 = null, end = data.score;
+            function tick(ts) {
+                if (!t0) t0 = ts;
+                const p = Math.min((ts - t0) / 800, 1);
+                const e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+                val.textContent = Math.floor(end * e) + '%';
+                if (p < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+
+            document.getElementById('btn-start').style.display = 'none';
+
+            const btnNext = document.getElementById('btn-next');
+            btnNext.style.display = 'inline-block';
+            btnNext.classList.remove('appear');
+            void btnNext.offsetWidth;
+            btnNext.classList.add('appear');
+
+            document.getElementById('btn-results').style.display = 'inline-block';
+        });
+    }
+
+    function nextLevel() {
+        fetch('/next_level', { method:'POST' })
+            .then(r => r.json())
+            .then(d => { if (d.game_over) showResults(); else loadLevel(); })
+            .catch(() => loadLevel());
+    }
+
+    function showResults() {
+        if (!history.length) return;
+        const scores = history.map(r => r.score);
+        const avg  = Math.round(scores.reduce((a,b) => a+b, 0) / scores.length);
+        const best = Math.max(...scores);
+
+        const col = avg >= 80 ? 'var(--good)' : avg >= 50 ? 'var(--mid)' : 'var(--bad)';
+        const avgEl = document.getElementById('res-avg');
+        avgEl.textContent = avg + '%';
+        avgEl.style.color = col;
+
+        document.getElementById('res-total').textContent = history.length;
+        document.getElementById('res-best').textContent  = best + '%';
+        document.getElementById('res-verdict').textContent =
+            avg >= 80 ? 'Luar biasa — kamu memang jago pose!' :
+            avg >= 50 ? 'Lumayan, tapi masih bisa lebih baik.' :
+                        'Masih perlu banyak latihan nih.';
+
+        const list = document.getElementById('breakdown-list');
+        list.innerHTML = '';
+        history.forEach((r, i) => {
+            const c = r.score >= 80 ? 'var(--good)' : r.score >= 50 ? 'var(--mid)' : 'var(--bad)';
+            const row = document.createElement('div');
+            row.className = 'br-row';
+            row.style.animationDelay = (i * 0.07) + 's';
+            row.innerHTML = `
+                <div class="br-lv">Lv.${r.level}</div>
+                <div class="br-name">${r.clue}</div>
+                <div class="br-bar-bg"><div class="br-bar" style="width:0%;background:${c}" data-w="${r.score}"></div></div>
+                <div class="br-pct" style="color:${c}">${r.score}%</div>`;
+            list.appendChild(row);
+        });
+
+        const screen = document.getElementById('results-screen');
+        screen.style.display = 'flex';
+
+        // trigger bar animations after card slides in
+        setTimeout(() => {
+            list.querySelectorAll('.br-bar').forEach(b => b.style.width = b.dataset.w + '%');
+        }, 200);
+    }
+
+    function closeResults() {
+        document.getElementById('results-screen').style.display = 'none';
+    }
+
+    function restartGame() {
+        history = [];
+        document.getElementById('results-screen').style.display = 'none';
+        document.getElementById('btn-results').style.display    = 'none';
+        fetch('/restart', { method:'POST' }).catch(() => {}).finally(() => loadLevel());
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.code === 'Space') {
+            const b = document.getElementById('btn-start');
+            if (b.style.display !== 'none' && !b.disabled) startGame();
+        }
+        if (e.code === 'KeyN') {
+            const b = document.getElementById('btn-next');
+            if (b.style.display !== 'none') nextLevel();
+        }
+        if (e.code === 'Escape') closeResults();
+    });
+</script>
+</body>
+</html>
