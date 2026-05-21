@@ -34,21 +34,12 @@
             padding:0 28px; border-bottom:1px solid var(--border);
             background:var(--white); position:relative; z-index:10;
         }
-
         .logo { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text); }
         .logo em { color:var(--accent); font-style:normal; }
-
         .header-center { position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; }
-
-        .rec-dot {
-            width:7px; height:7px; border-radius:50%;
-            background:#d03030;
-            animation:recBlink 1.4s ease-in-out infinite;
-        }
+        .rec-dot { width:7px; height:7px; border-radius:50%; background:#d03030; animation:recBlink 1.4s ease-in-out infinite; }
         @keyframes recBlink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-
         .rec-label { font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; }
-
         .header-right { display:flex; align-items:center; gap:24px; }
         .level-word { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
         .level-num { font-family:'Barlow Condensed',sans-serif; font-size:1.4rem; font-weight:800; color:var(--text); line-height:1; display:inline-block; }
@@ -57,19 +48,28 @@
 
         /* MAIN */
         .main { display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden; position:relative; z-index:1; background:var(--border); gap:1px; }
-
         .panel { position:relative; overflow:hidden; background:#1a1916; }
-        .panel-left { border-right:none; }
-
         .panel-label {
             position:absolute; top:14px; left:14px;
-            background:rgba(255,255,255,0.92);
-            border:1px solid var(--border);
+            background:rgba(255,255,255,0.92); border:1px solid var(--border);
             padding:4px 12px; font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.14em; color:var(--muted); text-transform:uppercase; z-index:10;
         }
 
-        img.video-feed   { width:100%; height:100%; object-fit:cover;   display:block; }
+        /* Kamera pakai canvas + video tersembunyi */
+        #camera-video { display:none; }
+        #camera-canvas { width:100%; height:100%; object-fit:cover; display:block; transform:scaleX(-1); }
+
         img.meme-display { width:100%; height:100%; object-fit:contain; display:block; background:#111; }
+
+        /* STATUS KAMERA */
+        #cam-status {
+            position:absolute; inset:0; display:flex; flex-direction:column;
+            justify-content:center; align-items:center; background:#111; z-index:5;
+            gap:10px; transition: opacity 0.4s;
+        }
+        #cam-status.hidden { opacity:0; pointer-events:none; }
+        .cam-icon { font-size:2.5rem; }
+        .cam-text { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:#555; letter-spacing:0.1em; text-transform:uppercase; }
 
         /* COUNTDOWN */
         #countdown-text { position:absolute; inset:0; display:none; justify-content:center; align-items:center; font-family:'Barlow Condensed',sans-serif; font-size:9rem; font-weight:800; color:white; z-index:30; pointer-events:none; text-shadow:0 2px 40px rgba(0,0,0,0.7); }
@@ -116,29 +116,18 @@
         #flash-overlay { position:fixed; inset:0; background:white; opacity:0; pointer-events:none; z-index:500; }
 
         /* FINISHED SCREEN */
-        #finished-screen {
-            position:fixed; inset:0; z-index:300; display:none;
-            flex-direction:column; align-items:center; justify-content:center;
-            background:var(--white);
-        }
+        #finished-screen { position:fixed; inset:0; z-index:300; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--white); }
         #finished-screen.show { display:flex; }
-
         .finished-inner { display:flex; flex-direction:column; align-items:center; animation:finIn 0.5s cubic-bezier(.18,.89,.32,1.28); }
         @keyframes finIn { from{transform:translateY(24px);opacity:0} to{transform:translateY(0);opacity:1} }
-
         .finished-eyebrow { font-family:'JetBrains Mono',monospace; font-size:0.68rem; letter-spacing:0.2em; color:var(--muted); text-transform:uppercase; margin-bottom:18px; animation:fadeUp 0.4s 0.1s both; }
-
         .finished-word { font-family:'Barlow Condensed',sans-serif; font-size:clamp(5rem,13vw,9.5rem); font-weight:800; line-height:0.9; color:var(--text); letter-spacing:-0.01em; animation:fadeUp 0.4s 0.15s both; }
-
         .finished-line { width:60px; height:3px; background:var(--accent); margin:26px 0; animation:lineGrow 0.5s 0.3s both ease; }
         @keyframes lineGrow { from{width:0} to{width:60px} }
-
         .finished-score-label { font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.15em; color:var(--muted); text-transform:uppercase; margin-bottom:6px; animation:fadeUp 0.4s 0.35s both; }
         .finished-score-num { font-family:'Barlow Condensed',sans-serif; font-size:clamp(2.5rem,6vw,4rem); font-weight:800; line-height:1; animation:fadeUp 0.4s 0.4s both; }
         .finished-verdict { font-size:0.85rem; color:var(--muted); margin-top:6px; font-style:italic; animation:fadeUp 0.4s 0.45s both; }
-
         .finished-actions { display:flex; gap:12px; margin-top:36px; animation:fadeUp 0.4s 0.5s both; }
-
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
         /* RESULTS MODAL */
@@ -187,12 +176,21 @@
 
 <!-- PANELS -->
 <div class="main">
+    <!-- Panel Kamera -->
     <div class="panel panel-left">
         <div class="panel-label">Kamera</div>
-        <img src="{{ url_for('video_feed') }}" class="video-feed" alt="Feed Kamera">
+        <!-- Status loading kamera -->
+        <div id="cam-status">
+            <div class="cam-icon">📷</div>
+            <div class="cam-text">Memuat kamera...</div>
+        </div>
+        <!-- Video & canvas untuk MediaPipe -->
+        <video id="camera-video" playsinline autoplay muted></video>
+        <canvas id="camera-canvas"></canvas>
         <div id="countdown-text" style="display:none;"><span class="countdown-num">3</span></div>
     </div>
 
+    <!-- Panel Meme Target -->
     <div class="panel">
         <div class="panel-label">Target</div>
         <img id="meme-image" class="meme-display" src="" alt="Meme Target">
@@ -272,7 +270,73 @@
     </div>
 </div>
 
+<!-- MediaPipe dari CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
 <script>
+    // =============================================
+    // MEDIAPIPE SETUP (jalan di browser pengunjung)
+    // =============================================
+    const videoEl  = document.getElementById('camera-video');
+    const canvasEl = document.getElementById('camera-canvas');
+    const ctx      = canvasEl.getContext('2d');
+    const camStatus = document.getElementById('cam-status');
+
+    let latestLandmarks = null; // Simpan landmark terbaru
+
+    const mpPose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+
+    mpPose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+    });
+
+    mpPose.onResults((results) => {
+        // Resize canvas sesuai video
+        canvasEl.width  = videoEl.videoWidth;
+        canvasEl.height = videoEl.videoHeight;
+
+        // Gambar frame kamera
+        ctx.save();
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        ctx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
+
+        // Gambar skeleton pose kalau terdeteksi
+        if (results.poseLandmarks) {
+            latestLandmarks = results.poseLandmarks;
+            drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#ffffff55', lineWidth: 2 });
+            drawLandmarks(ctx, results.poseLandmarks, { color: '#2b52a0', lineWidth: 1, radius: 3 });
+        } else {
+            latestLandmarks = null;
+        }
+        ctx.restore();
+    });
+
+    // Start kamera
+    const camera = new Camera(videoEl, {
+        onFrame: async () => {
+            await mpPose.send({ image: videoEl });
+        },
+        width: 640,
+        height: 480,
+    });
+
+    camera.start().then(() => {
+        camStatus.classList.add('hidden');
+    }).catch((err) => {
+        camStatus.querySelector('.cam-text').textContent = 'Izinkan akses kamera!';
+        console.error('Kamera error:', err);
+    });
+
+    // =============================================
+    // GAME LOGIC
+    // =============================================
     let history = [];
     let currentClue = '';
 
@@ -335,7 +399,27 @@
     }
 
     function finishGame() {
-        fetch('/check_score', { method:'POST' }).then(r => r.json()).then(data => {
+        // Ambil landmark terbaru dari MediaPipe dan kirim ke server untuk scoring
+        if (!latestLandmarks) {
+            alert('Pose tidak terdeteksi! Pastikan seluruh badan terlihat kamera.');
+            document.getElementById('btn-start').disabled = false;
+            document.getElementById('btn-start').textContent = 'Mulai';
+            return;
+        }
+
+        // Format landmark sesuai yang diharapkan server
+        const landmarksData = latestLandmarks.map(lm => ({
+            x: lm.x,
+            y: lm.y,
+            z: lm.z,
+            visibility: lm.visibility
+        }));
+
+        fetch('/check_score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ landmarks: landmarksData })
+        }).then(r => r.json()).then(data => {
             const cover = document.getElementById('mystery-cover');
             cover.classList.add('hiding');
             setTimeout(() => { cover.style.display = 'none'; }, 400);
@@ -368,7 +452,7 @@
     }
 
     function nextLevel() {
-        fetch('/next_level', { method:'POST' })
+        fetch('/next_level', { method: 'POST' })
             .then(r => r.json())
             .then(d => { if (d.game_over) showFinished(); else loadLevel(); })
             .catch(() => loadLevel());
@@ -385,12 +469,8 @@
             avg >= 50 ? 'Lumayan, masih ada ruang buat improve.' :
                         'Perlu lebih banyak latihan pose nih!';
 
-        // retrigger animations
         const inner = document.querySelector('.finished-inner');
         inner.style.animation = 'none'; void inner.offsetWidth; inner.style.animation = '';
-        inner.querySelectorAll('[style*="animation"], .finished-eyebrow, .finished-word, .finished-line, .finished-score-label, .finished-score-num, .finished-verdict, .finished-actions').forEach(e => {
-            e.style.animation = 'none'; void e.offsetWidth; e.style.animation = '';
-        });
 
         document.getElementById('finished-screen').classList.add('show');
     }
