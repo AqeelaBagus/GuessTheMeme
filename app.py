@@ -57,14 +57,20 @@ class GameState:
 
     def next_level(self):
         self.idx += 1
-        # Jika antrian habis, acak ulang
         if self.idx >= len(self.meme_queue):
-            random.shuffle(self.meme_queue)
-            self.idx = 0
-            
+            return True  # game over
         self.curr_file = self.meme_queue[self.idx]
         self.load_current_data()
         self.score = 0
+        return False  # masih ada level
+
+    def reset(self):
+        random.shuffle(self.all_memes)
+        self.meme_queue = self.all_memes.copy()
+        self.curr_file = self.meme_queue[0] if self.meme_queue else None
+        self.idx = 0
+        self.score = 0
+        self.load_current_data()
 
 game = GameState()
 
@@ -153,7 +159,12 @@ def check_score():
 
 @app.route('/next_level', methods=['POST'])
 def next_level_route():
-    game.next_level()
+    game_over = game.next_level()
+    return jsonify({'status': 'ok', 'game_over': game_over})
+
+@app.route('/restart', methods=['POST'])
+def restart():
+    game.reset()
     return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
